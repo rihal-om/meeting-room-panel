@@ -107,7 +107,7 @@ Everything below reaches every tablet with its normal poll (about 30 seconds). N
 
 Paired tablets check the backend about 2 minutes after start and then every 6 hours. If you have published a newer version, the tablet downloads it, verifies its SHA-256 and installs it silently, then restarts the panel. This only works when the tablet is Device Owner.
 
-**The release signing key** (`room-panel.jks`, alias `room-panel`) was created on 2026-10-08 and sent to the operator with its password. Keep both in a password manager and **never** commit them. Every APK a tablet ever installs must be signed with this key; if it is lost, every tablet has to be factory-reset and set up again.
+**The release signing key** (`room-panel.jks`, alias `room-panel`) was created on 2026-10-08. It and its password are held in the **Rihal IT secrets vault**; **never** commit them or send them by email or chat. Every APK a tablet ever installs must be signed with this key; if it is lost, every tablet has to be factory-reset and set up again.
 
 **Each release:**
 

@@ -4,6 +4,7 @@ An Android tablet app mounted outside a meeting room. It shows whether the room 
 
 The room's calendar lives in **Microsoft 365** (an Exchange room mailbox), so bookings made in Outlook or Teams show up on the panel and panel bookings show up in Outlook and Teams. Google Workspace is planned.
 
+- **Taking over this project?** Start with [docs/HANDOFF.md](docs/HANDOFF.md).
 - **Plan:** [docs/PLAN.md](docs/PLAN.md)
 - **Research:** [competitors](docs/research/competitors.md) · [Microsoft 365 + Android kiosk](docs/research/technical.md)
 
