@@ -30,3 +30,75 @@ jobs:
           path: |
             android/app/build/reports/
             android/app/build/outputs/apk/debug/
+
+  # Signed release APK that Device-Owner tablets self-install. Runs only on a push to
+  # main, and only when the release keystore secrets are configured (docs/tablet-setup.md).
+  release:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Decode release keystore
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$RELEASE_KEYSTORE_BASE64" ]; then
+            echo "::error::RELEASE_KEYSTORE_BASE64 secret is not set - cannot build a signed release. See docs/tablet-setup.md."
+            exit 1
+          fi
+          echo "$RELEASE_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+
+      - name: Assemble signed release
+        env:
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          ./gradlew assembleRelease \
+            -PreleaseKeystore="$RUNNER_TEMP/release.jks" \
+            -PreleaseKeyAlias="$RELEASE_KEY_ALIAS" \
+            -PreleaseStorePassword="$RELEASE_STORE_PASSWORD" \
+            -PreleaseKeyPassword="$RELEASE_KEY_PASSWORD"
+
+      - name: Read version, compute SHA-256, write the release snippet
+        id: meta
+        run: |
+          apk=app/build/outputs/apk/release/app-release.apk
+          sha=$(sha256sum "$apk" | cut -d' ' -f1)
+          code=$(./gradlew -q :app:properties | awk -F': ' '/^versionCode:/{print $2}')
+          name=$(./gradlew -q :app:properties | awk -F': ' '/^versionName:/{print $2}')
+          echo "versionName=$name" >> "$GITHUB_OUTPUT"
+          cp "$apk" "app/build/outputs/apk/release/meeting-room-panel-$name.apk"
+          {
+            echo "### Release APK \`meeting-room-panel-$name.apk\` is ready"
+            echo ""
+            echo "Publish it on the self-hosted portal (the \`meeting-room-backend\` on the room-booking VM):"
+            echo ""
+            echo "1. Copy it to \`/opt/meeting-room-backend/public/downloads/meeting-room-panel-$name.apk\`."
+            echo "2. Update \`lib/device/release.ts\`:"
+            echo '```ts'
+            echo "versionCode: $code,"
+            echo "versionName: \"$name\","
+            echo "path: \"/downloads/meeting-room-panel-$name.apk\","
+            echo "sha256: \"$sha\","
+            echo '```'
+            echo "   (or set APP_UPDATE_VERSION_CODE / APP_UPDATE_URL / APP_UPDATE_SHA256 in the VM's .env)."
+            echo "3. Rebuild/redeploy the app container on the VM."
+            echo ""
+            echo "Tablets below versionCode $code download it, verify the SHA-256, and install silently within ~6 h (reboot one to force a check ~2 min after start)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: android/app/build/outputs/apk/release/meeting-room-panel-${{ steps.meta.outputs.versionName }}.apk
