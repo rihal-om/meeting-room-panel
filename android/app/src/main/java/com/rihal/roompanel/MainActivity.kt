@@ -80,7 +80,7 @@ class MainActivity : ComponentActivity() {
                 if (paired) {
                     PanelRoute(
                         session = session,
-                        repository = { if (demoMode) DemoAgendaRepository(getString(R.string.demo_room_name)) else RemoteAgendaRepository(client(), mover = mover()) },
+                        repository = { if (demoMode) DemoAgendaRepository(getString(R.string.demo_room_name)) else RemoteAgendaRepository(client(), mover = mover(), rebooter = { kiosk.reboot() }) },
                         onUnpaired = {
                             // Revoked in the portal, or its room deleted: forget the token and pair again.
                             credentials.clear()

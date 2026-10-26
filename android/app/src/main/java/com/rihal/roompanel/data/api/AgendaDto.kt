@@ -32,6 +32,8 @@ data class AgendaDto(
     val guestWifi: GuestWifiDto? = null,
     /** Set while the portal moves to a new address (backend docs/self-hosting.md). */
     val move: MoveDto? = null,
+    /** One-shot: the portal asked this tablet to restart. */
+    val reboot: Boolean = false,
 )
 
 @Serializable

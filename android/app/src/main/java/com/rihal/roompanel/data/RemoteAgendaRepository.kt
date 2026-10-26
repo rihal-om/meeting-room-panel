@@ -30,6 +30,8 @@ class RemoteAgendaRepository(
     private val client: BackendClient,
     private val clock: Clock = Clock.systemUTC(),
     private val mover: ServerMover? = null,
+    /** Invoked when the portal asked this tablet to restart (device-owner reboot). */
+    private val rebooter: (() -> Unit)? = null,
 ) : AgendaRepository {
 
     private val mutable = MutableStateFlow(AgendaState())
@@ -51,6 +53,8 @@ class RemoteAgendaRepository(
             )
             // The portal is moving: switch once the new address knows this tablet (never throws).
             mover?.consider(agenda.move?.url)
+            // The portal asked this tablet to restart (one-shot; the backend already cleared it).
+            if (agenda.reboot) rebooter?.invoke()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

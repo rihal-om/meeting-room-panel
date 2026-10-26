@@ -3,6 +3,7 @@ package com.rihal.roompanel.kiosk
 import android.app.Activity
 import android.app.ActivityManager
 import android.app.admin.DevicePolicyManager
+import android.util.Log
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -70,5 +71,15 @@ class KioskPolicy(context: Context) {
         dpm.setStatusBarDisabled(admin, false)
         dpm.setGlobalSetting(admin, Settings.Global.STAY_ON_WHILE_PLUGGED_IN, "0")
         if (relinquishOwnership) dpm.clearDeviceOwnerApp(app.packageName)
+    }
+
+    /** Reboot the device now (Device Owner only); used by the portal's "Restart". No-op otherwise. */
+    fun reboot() {
+        if (!isDeviceOwner) return
+        try {
+            dpm.reboot(admin)
+        } catch (e: Exception) {
+            Log.w("RoomPanel", "reboot failed: ${e.javaClass.simpleName}")
+        }
     }
 }
