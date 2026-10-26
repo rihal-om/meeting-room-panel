@@ -213,11 +213,14 @@ private fun StatusPane(state: PanelUiState, actions: PanelActions, onBookNow: ()
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     StatusDetails(state)
                 }
-                SideCode(state)
             }
             Messages(state)
             Spacer(Modifier.height(12.dp))
             StatusButtons(state, actions, onBookNow)
+        }
+        // Wi-Fi QR pinned to the top-right corner, clear of the status text.
+        Box(Modifier.align(Alignment.TopEnd).padding(horizontal = 36.dp, vertical = 28.dp)) {
+            SideCode(state)
         }
     }
 }
@@ -419,20 +422,13 @@ private fun ReleaseWarning(meeting: Meeting) {
     WhiteText(stringResource(R.string.release_warning, LocalTimeFormat.current.time(at)), 20.sp, FontWeight.SemiBold)
 }
 
-/** Teams join QR for the meeting on screen, else the guest Wi-Fi QR while the room is idle. */
+/** Guest Wi-Fi QR while the room is idle. (The Teams join QR was removed on request.) */
 @Composable
 private fun SideCode(state: PanelUiState) {
-    val meeting = when (val s = state.status) {
-        is RoomStatus.Busy -> s.current
-        is RoomStatus.StartingSoon -> s.next
-        is RoomStatus.Free -> null
-    }
-    val joinUrl = meeting?.joinUrl?.takeIf { !meeting.isPrivate && it.startsWith("https://") }
+    val idle = state.status is RoomStatus.Free
     val wifi = state.config.guestWifi
-    when {
-        joinUrl != null -> CodeCard(joinUrl, stringResource(R.string.scan_to_join))
-        meeting == null && wifi != null && !state.config.outOfService ->
-            CodeCard(wifi.qrPayload(), stringResource(R.string.guest_wifi_scan, wifi.ssid), stringResource(R.string.guest_wifi))
+    if (idle && wifi != null && !state.config.outOfService) {
+        CodeCard(wifi.qrPayload(), stringResource(R.string.guest_wifi_scan, wifi.ssid), stringResource(R.string.guest_wifi))
     }
 }
 
