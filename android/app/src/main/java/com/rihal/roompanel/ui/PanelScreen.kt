@@ -50,6 +50,7 @@ import com.rihal.roompanel.domain.AttendeeDisplay
 import com.rihal.roompanel.domain.BookingRules
 import com.rihal.roompanel.domain.FreeRoom
 import com.rihal.roompanel.domain.IssueCategory
+import com.rihal.roompanel.domain.Person
 import com.rihal.roompanel.domain.Meeting
 import com.rihal.roompanel.domain.PanelConfig
 import com.rihal.roompanel.domain.RoomStatus
@@ -67,7 +68,8 @@ class PanelActions(
     val onReport: (IssueCategory) -> Unit = {},
     val onOpenFreeRooms: () -> Unit = {},
     val onCloseFreeRooms: () -> Unit = {},
-    val onBookFreeRoom: (room: FreeRoom, minutes: Int, presetIndex: Int?) -> Unit = { _, _, _ -> },
+    val onBookFreeRoom: (room: FreeRoom, minutes: Int, presetIndex: Int?, booker: Person?) -> Unit = { _, _, _, _ -> },
+    val onSearchPeople: (String) -> Unit = {},
     val onDismissFeedback: () -> Unit = {},
 )
 
@@ -92,6 +94,7 @@ fun PanelScreen(
     state: PanelUiState,
     actions: PanelActions = PanelActions(),
     freeRooms: FreeRoomsState = FreeRoomsState.Closed,
+    people: List<Person> = emptyList(),
 ) {
     val branding = state.config.branding
     PanelLocale(shownLocale(branding.language, state.now), state.config.zone, branding.clock24h) {
@@ -128,7 +131,7 @@ fun PanelScreen(
                 BookingSheet(
                     state = state,
                     request = request,
-                    onBook = { minutes, preset ->
+                    onBook = { minutes, preset, _ ->
                         booking = null
                         actions.onBook(minutes, request.start, preset)
                     },
@@ -165,11 +168,15 @@ fun PanelScreen(
                 BookingSheet(
                     state = state,
                     request = request,
-                    onBook = { minutes, preset ->
+                    onBook = { minutes, preset, booker ->
                         freeRoomBooking = null
-                        request.freeRoom?.let { actions.onBookFreeRoom(it, minutes, preset) }
+                        actions.onSearchPeople("")
+                        request.freeRoom?.let { actions.onBookFreeRoom(it, minutes, preset, booker) }
                     },
-                    onClose = { freeRoomBooking = null },
+                    onClose = { freeRoomBooking = null; actions.onSearchPeople("") },
+                    showBooker = true,
+                    people = people,
+                    onSearchPeople = actions.onSearchPeople,
                 )
             }
         }
@@ -458,7 +465,11 @@ private fun StatusButtons(state: PanelUiState, actions: PanelActions, onBookNow:
                 state.extendOptions.forEach { m ->
                     PanelOutlinedButton(stringResource(R.string.extend_minutes, m), enabled) { actions.onExtend(current.id, m) }
                 }
-                if (current.bookedFromPanel && !state.stale) PanelOutlinedButton(stringResource(R.string.end_now), enabled) { actions.onEnd(current.id) }
+                // End to free the room when finished early: panel bookings any time, and any
+                // other meeting once it's checked in (so Outlook/Teams meetings can be ended too).
+                if ((current.bookedFromPanel || current.checkedIn) && !state.stale) {
+                    PanelOutlinedButton(stringResource(R.string.end_now), enabled) { actions.onEnd(current.id) }
+                }
             }
             is RoomStatus.StartingSoon -> {
                 val next = status.next

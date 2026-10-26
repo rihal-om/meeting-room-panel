@@ -20,11 +20,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import com.rihal.roompanel.R
 import com.rihal.roompanel.domain.FreeRoom
 import com.rihal.roompanel.domain.IssueCategory
+import com.rihal.roompanel.domain.Person
 import java.time.Duration
 
 private val Ink = Color(0xFF14171A)
@@ -99,12 +103,17 @@ private fun Sheet(title: String, onClose: () -> Unit, content: @Composable () ->
 internal fun BookingSheet(
     state: PanelUiState,
     request: BookingRequest,
-    onBook: (minutes: Int, presetIndex: Int?) -> Unit,
+    onBook: (minutes: Int, presetIndex: Int?, booker: Person?) -> Unit,
     onClose: () -> Unit,
+    showBooker: Boolean = false,
+    people: List<Person> = emptyList(),
+    onSearchPeople: (String) -> Unit = {},
 ) {
     val fmt = LocalTimeFormat.current
     val presets = state.config.branding.titlePresets
     var picked by remember { mutableIntStateOf(0) }
+    var bookerQuery by remember { mutableStateOf("") }
+    var pickedBooker by remember { mutableStateOf<Person?>(null) }
     val from = request.start ?: state.now
     val roomName = request.roomName ?: state.config.roomName
     val title = if (request.start == null) stringResource(R.string.book_room, roomName)
@@ -135,6 +144,36 @@ internal fun BookingSheet(
                 }
             }
         }
+        if (showBooker) {
+            Text(stringResource(R.string.booked_by), color = Ink, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+            OutlinedTextField(
+                value = bookerQuery,
+                onValueChange = { bookerQuery = it; pickedBooker = null; onSearchPeople(it) },
+                singleLine = true,
+                placeholder = { Text(stringResource(R.string.booked_by_hint), fontSize = 18.sp, color = Muted) },
+                textStyle = LocalTextStyle.current.copy(fontSize = 20.sp),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            if (pickedBooker == null && people.isNotEmpty()) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    people.forEach { person ->
+                        Text(
+                            "${person.name}  ·  ${person.email}",
+                            color = Ink,
+                            fontSize = 18.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFFF4F6F8))
+                                .clickable { pickedBooker = person; bookerQuery = person.name; onSearchPeople("") }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                        )
+                    }
+                }
+            }
+        }
         Text(stringResource(R.string.how_long), color = Ink, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
         if (request.lengths.isEmpty()) {
             Text(stringResource(R.string.no_time_available), color = Muted, fontSize = 20.sp)
@@ -142,7 +181,7 @@ internal fun BookingSheet(
             FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 request.lengths.forEach { minutes ->
                     Button(
-                        onClick = { onBook(minutes, presets.takeIf { it.isNotEmpty() }?.let { picked }) },
+                        onClick = { onBook(minutes, presets.takeIf { it.isNotEmpty() }?.let { picked }, pickedBooker) },
                         enabled = !state.actionInFlight,
                         colors = ButtonDefaults.buttonColors(containerColor = StatusColors.Free, contentColor = Color.White),
                         shape = RoundedCornerShape(16.dp),

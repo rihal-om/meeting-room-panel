@@ -130,10 +130,12 @@ class MainActivity : ComponentActivity() {
                 onOpenFreeRooms = vm::openFreeRooms,
                 onCloseFreeRooms = vm::closeFreeRooms,
                 onBookFreeRoom = vm::bookFreeRoom,
+                onSearchPeople = vm::searchPeople,
                 onDismissFeedback = vm::dismissFeedback,
             )
         }
-        PanelScreen(state = current, actions = actions, freeRooms = freeRooms)
+        val people by vm.people.collectAsStateWithLifecycle()
+        PanelScreen(state = current, actions = actions, freeRooms = freeRooms, people = people)
     }
 
     @Composable

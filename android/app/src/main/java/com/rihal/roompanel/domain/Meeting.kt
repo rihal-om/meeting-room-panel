@@ -129,5 +129,8 @@ data class FreeRoom(
     val bookable: Boolean,
 )
 
+/** A person from the Microsoft 365 directory, for the "who booked it" typeahead. */
+data class Person(val name: String, val email: String)
+
 /** "Report a problem" categories; the same fixed list as the portal. */
 enum class IssueCategory { AV, VIDEO_CALL, CLEANING, SUPPLIES, TEMPERATURE, OTHER }

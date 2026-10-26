@@ -17,6 +17,7 @@ import com.rihal.roompanel.domain.BrightnessSchedule
 import com.rihal.roompanel.domain.FreeRoom
 import com.rihal.roompanel.domain.IssueCategory
 import com.rihal.roompanel.domain.PanelConfig
+import com.rihal.roompanel.domain.Person
 import com.rihal.roompanel.domain.RoomStatus
 import com.rihal.roompanel.domain.RoomStatusCalculator
 import kotlinx.coroutines.Job
@@ -190,9 +191,9 @@ class PanelViewModel(
         },
     )
 
-    /** Book another room chosen in "Find a free room"; the start is always now. */
-    fun bookFreeRoom(room: FreeRoom, minutes: Int, presetIndex: Int? = null) = run(
-        action = { repository.bookRoom(room.id, minutes, null, presetIndex) },
+    /** Book another room chosen in "Find a free room"; the start is always now. [booker] attaches who booked it. */
+    fun bookFreeRoom(room: FreeRoom, minutes: Int, presetIndex: Int? = null, booker: Person? = null) = run(
+        action = { repository.bookRoom(room.id, minutes, null, presetIndex, booker?.email, booker?.name) },
         success = {
             val from = clock.instant()
             ActionResult.Booked(from, from.plus(Duration.ofMinutes(minutes.toLong())), later = false)
@@ -229,6 +230,35 @@ class PanelViewModel(
 
     fun closeFreeRooms() {
         freeRoomsMutable.value = FreeRoomsState.Closed
+    }
+
+    private val peopleMutable = MutableStateFlow<List<Person>>(emptyList())
+    val people: StateFlow<List<Person>> = peopleMutable.asStateFlow()
+    private var peopleJob: Job? = null
+
+    /** Typeahead people search for "who booked it" (debounced). Under 2 chars clears the list. */
+    fun searchPeople(query: String) {
+        peopleJob?.cancel()
+        if (query.trim().length < 2) {
+            peopleMutable.value = emptyList()
+            return
+        }
+        peopleJob = viewModelScope.launch {
+            delay(250)
+            val result = try {
+                repository.searchPeople(query)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+            peopleMutable.value = result.getOrDefault(emptyList())
+        }
+    }
+
+    fun clearPeople() {
+        peopleJob?.cancel()
+        peopleMutable.value = emptyList()
     }
 
     /**

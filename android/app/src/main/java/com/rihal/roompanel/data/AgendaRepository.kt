@@ -2,6 +2,7 @@ package com.rihal.roompanel.data
 
 import com.rihal.roompanel.domain.FreeRoom
 import com.rihal.roompanel.domain.IssueCategory
+import com.rihal.roompanel.domain.Person
 import com.rihal.roompanel.domain.Meeting
 import com.rihal.roompanel.domain.PanelConfig
 import kotlinx.coroutines.flow.StateFlow
@@ -47,7 +48,17 @@ interface AgendaRepository {
     suspend fun freeRooms(): Result<List<FreeRoom>>
 
     /** Book another room (by id) from the free-room finder; the backend enforces that room's rules. */
-    suspend fun bookRoom(roomId: String, minutes: Int, start: Instant? = null, presetIndex: Int? = null): Result<Unit>
+    suspend fun bookRoom(
+        roomId: String,
+        minutes: Int,
+        start: Instant? = null,
+        presetIndex: Int? = null,
+        bookedByEmail: String? = null,
+        bookedByName: String? = null,
+    ): Result<Unit>
+
+    /** Directory people search for the "who booked it" typeahead; empty list when unavailable. */
+    suspend fun searchPeople(query: String): Result<List<Person>>
     suspend fun reportIssue(category: IssueCategory): Result<Unit>
 
     /** A branding image by its server path, or null if it can't be fetched (the panel just goes without). */
