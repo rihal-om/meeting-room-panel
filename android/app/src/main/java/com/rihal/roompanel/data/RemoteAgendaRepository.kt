@@ -73,6 +73,19 @@ class RemoteAgendaRepository(
         client.get("/api/device/free-rooms", FreeRoomsDto.serializer()).rooms.map { it.toFreeRoom() }
     }
 
+    override suspend fun bookRoom(roomId: String, minutes: Int, start: Instant?, presetIndex: Int?): Result<Unit> = attempt {
+        client.post(
+            "/api/device/rooms/$roomId/book",
+            buildJsonObject {
+                put("minutes", minutes)
+                start?.let { put("start", it.toString()) }
+                presetIndex?.let { put("presetIndex", it) }
+            }.toString(),
+            JsonElement.serializer(),
+        )
+        Unit
+    }
+
     override suspend fun reportIssue(category: IssueCategory): Result<Unit> = attempt {
         client.post("/api/device/issues", """{"category":"${category.name}"}""", JsonElement.serializer())
         Unit

@@ -129,6 +129,7 @@ class MainActivity : ComponentActivity() {
                 onReport = vm::reportIssue,
                 onOpenFreeRooms = vm::openFreeRooms,
                 onCloseFreeRooms = vm::closeFreeRooms,
+                onBookFreeRoom = vm::bookFreeRoom,
                 onDismissFeedback = vm::dismissFeedback,
             )
         }

@@ -23,6 +23,21 @@ object BookingRules {
         return config.bookingOptionsMinutes.filter { it <= limit }
     }
 
+    /**
+     * Book-now durations for another room from "Find a free room": the same step choices, bounded
+     * by how long that room is free ([freeUntil]) and its own ad-hoc cap. The backend re-checks.
+     */
+    fun freeRoomOptions(
+        maxAdHocMinutes: Int,
+        freeUntil: Instant?,
+        now: Instant,
+        steps: List<Int>,
+    ): List<Int> {
+        val untilNext = freeUntil?.let { Duration.between(now, it).toMinutes() } ?: Long.MAX_VALUE
+        val limit = minOf(untilNext, maxAdHocMinutes.toLong())
+        return steps.filter { it <= limit }
+    }
+
     /** The extend steps (+15, +30) that fit before the next booking. Empty for meetings booked elsewhere. */
     fun extendOptions(meeting: Meeting, meetings: List<Meeting>, config: PanelConfig): List<Int> =
         config.extendOptionsMinutes.filter {

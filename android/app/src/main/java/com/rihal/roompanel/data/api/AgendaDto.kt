@@ -71,6 +71,8 @@ data class FreeRoomDto(
     val floor: String = "",
     val capacity: Int? = null,
     val freeUntil: String? = null,
+    val maxAdHocMinutes: Int = 0,
+    val bookable: Boolean = false,
 )
 
 @Serializable
@@ -172,10 +174,13 @@ fun PanelDto.toBranding() = Branding(
 )
 
 fun FreeRoomDto.toFreeRoom() = FreeRoom(
+    id = id,
     name = name,
     floor = floor,
     capacity = capacity,
     freeUntil = freeUntil?.let { runCatching { Instant.parse(it) }.getOrNull() },
+    maxAdHocMinutes = maxAdHocMinutes,
+    bookable = bookable,
 )
 
 fun MeetingDto.toMeeting(): Meeting = Meeting(

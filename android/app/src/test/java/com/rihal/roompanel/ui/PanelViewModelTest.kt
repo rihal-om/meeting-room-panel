@@ -56,6 +56,8 @@ class PanelViewModelTest {
         override suspend fun endEarly(meetingId: String) = Result.success(Unit)
         override suspend fun checkIn(meetingId: String) = Result.success(Unit)
         override suspend fun freeRooms() = Result.success(emptyList<FreeRoom>())
+        override suspend fun bookRoom(roomId: String, minutes: Int, start: Instant?, presetIndex: Int?) =
+            Result.success(Unit)
         override suspend fun reportIssue(category: IssueCategory) = Result.success(Unit)
         override suspend fun image(path: String): ByteArray? = null
     }

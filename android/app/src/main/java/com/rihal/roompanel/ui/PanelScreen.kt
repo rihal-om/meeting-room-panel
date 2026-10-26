@@ -47,6 +47,8 @@ import androidx.compose.ui.unit.sp
 import com.rihal.roompanel.R
 import com.rihal.roompanel.data.SyncProblem
 import com.rihal.roompanel.domain.AttendeeDisplay
+import com.rihal.roompanel.domain.BookingRules
+import com.rihal.roompanel.domain.FreeRoom
 import com.rihal.roompanel.domain.IssueCategory
 import com.rihal.roompanel.domain.Meeting
 import com.rihal.roompanel.domain.PanelConfig
@@ -65,11 +67,20 @@ class PanelActions(
     val onReport: (IssueCategory) -> Unit = {},
     val onOpenFreeRooms: () -> Unit = {},
     val onCloseFreeRooms: () -> Unit = {},
+    val onBookFreeRoom: (room: FreeRoom, minutes: Int, presetIndex: Int?) -> Unit = { _, _, _ -> },
     val onDismissFeedback: () -> Unit = {},
 )
 
-/** An open booking sheet: from now, or from a later free slot. */
-internal data class BookingRequest(val start: Instant?, val lengths: List<Int>)
+/**
+ * An open booking sheet: from now, or from a later free slot of the tablet's own room; or, when
+ * [freeRoom] is set, booking a different room chosen in "Find a free room" ([roomName] titles it).
+ */
+internal data class BookingRequest(
+    val start: Instant?,
+    val lengths: List<Int>,
+    val roomName: String? = null,
+    val freeRoom: FreeRoom? = null,
+)
 
 /**
  * Design A ("Split"): room status on the start side, today and tomorrow on the end side.
@@ -86,6 +97,9 @@ fun PanelScreen(
     PanelLocale(shownLocale(branding.language, state.now), state.config.zone, branding.clock24h) {
         var booking by remember { mutableStateOf<BookingRequest?>(null) }
         var reporting by remember { mutableStateOf(false) }
+        // Booking another room from "Find a free room": separate from `booking` and NOT tied to this
+        // room's own bookingAllowed, so you can still grab a free room while your own room is busy.
+        var freeRoomBooking by remember { mutableStateOf<BookingRequest?>(null) }
         // A sheet for a choice the room no longer allows (it became busy, went stale) closes itself.
         LaunchedEffect(state.bookingAllowed) { if (!state.bookingAllowed) booking = null }
 
@@ -127,7 +141,37 @@ fun PanelScreen(
                     onClose = { reporting = false },
                 )
             }
-            if (freeRooms != FreeRoomsState.Closed) FreeRoomsSheet(freeRooms, actions.onCloseFreeRooms)
+            if (freeRooms != FreeRoomsState.Closed) {
+                FreeRoomsSheet(
+                    state = freeRooms,
+                    onClose = actions.onCloseFreeRooms,
+                    onPick = { room ->
+                        actions.onCloseFreeRooms()
+                        freeRoomBooking = BookingRequest(
+                            start = null,
+                            lengths = BookingRules.freeRoomOptions(
+                                room.maxAdHocMinutes,
+                                room.freeUntil,
+                                state.now,
+                                state.config.bookingOptionsMinutes,
+                            ),
+                            roomName = room.name,
+                            freeRoom = room,
+                        )
+                    },
+                )
+            }
+            freeRoomBooking?.let { request ->
+                BookingSheet(
+                    state = state,
+                    request = request,
+                    onBook = { minutes, preset ->
+                        freeRoomBooking = null
+                        request.freeRoom?.let { actions.onBookFreeRoom(it, minutes, preset) }
+                    },
+                    onClose = { freeRoomBooking = null },
+                )
+            }
         }
     }
 }
