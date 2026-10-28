@@ -16,6 +16,14 @@ jobs:
         working-directory: android
     steps:
       - uses: actions/checkout@v4
+
+      - name: Cimon runtime security
+        uses: rihal-om/.github/.github/actions/setup-cimon@main
+        continue-on-error: true
+        with:
+          mode: detect
+          client-id: ${{ secrets.CIMON_CLIENT_ID }}
+          secret: ${{ secrets.CIMON_SECRET }}
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
