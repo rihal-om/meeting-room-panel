@@ -19,6 +19,7 @@ jobs:
 
       - name: Cimon runtime security
         uses: rihal-om/.github/.github/actions/setup-cimon@main
+        continue-on-error: true
         with:
           mode: detect
           client-id: ${{ secrets.CIMON_CLIENT_ID }}
