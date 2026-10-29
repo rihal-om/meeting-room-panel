@@ -89,10 +89,13 @@ class DemoAgendaRepository(
 
     override suspend fun freeRooms(): Result<List<FreeRoom>> = Result.success(
         listOf(
-            FreeRoom("Majlis", "Ground floor", 12, clock.instant().plus(Duration.ofMinutes(90))),
-            FreeRoom("Focus Room", "2nd floor", 4, null),
+            FreeRoom("demo-majlis", "Majlis", "Ground floor", 12, clock.instant().plus(Duration.ofMinutes(90)), 120, true),
+            FreeRoom("demo-focus", "Focus Room", "2nd floor", 4, null, 120, true),
         ),
     )
+
+    override suspend fun bookRoom(roomId: String, minutes: Int, start: Instant?, presetIndex: Int?): Result<Unit> =
+        Result.success(Unit)
 
     override suspend fun reportIssue(category: IssueCategory): Result<Unit> = Result.success(Unit)
 

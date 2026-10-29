@@ -6,6 +6,11 @@
     <!-- Self-update (Device Owner installs silently; normal installs never reach this path). -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+    <!-- See the Milesight light-bar provider through Android 11+ package-visibility filtering. -->
+    <queries>
+        <provider android:authorities="com.ds.system.provider" />
+    </queries>
+
     <application
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"

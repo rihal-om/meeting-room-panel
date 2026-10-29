@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rihal.roompanel.R
+import com.rihal.roompanel.domain.FreeRoom
 import com.rihal.roompanel.domain.IssueCategory
 import java.time.Duration
 
@@ -105,7 +106,8 @@ internal fun BookingSheet(
     val presets = state.config.branding.titlePresets
     var picked by remember { mutableIntStateOf(0) }
     val from = request.start ?: state.now
-    val title = if (request.start == null) stringResource(R.string.book_room, state.config.roomName)
+    val roomName = request.roomName ?: state.config.roomName
+    val title = if (request.start == null) stringResource(R.string.book_room, roomName)
     else stringResource(R.string.book_from, fmt.time(request.start))
     Sheet(title, onClose) {
         if (presets.isNotEmpty()) {
@@ -188,9 +190,16 @@ internal fun issueLabel(c: IssueCategory) = when (c) {
     IssueCategory.OTHER -> R.string.issue_OTHER
 }
 
-/** "Find a free room": other rooms free right now, with where they are and until when. */
+/**
+ * "Find a free room": other rooms free right now, with where they are and until when. A room that
+ * allows tablet booking is tappable ([onPick]) to book it from here; one that doesn't is just shown.
+ */
 @Composable
-internal fun FreeRoomsSheet(state: FreeRoomsState, onClose: () -> Unit) {
+internal fun FreeRoomsSheet(
+    state: FreeRoomsState,
+    onClose: () -> Unit,
+    onPick: (FreeRoom) -> Unit = {},
+) {
     val fmt = LocalTimeFormat.current
     Sheet(stringResource(R.string.free_rooms_title), onClose) {
         when (state) {
@@ -207,6 +216,7 @@ internal fun FreeRoomsSheet(state: FreeRoomsState, onClose: () -> Unit) {
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(14.dp))
                                 .background(Color(0xFFF4F6F8))
+                                .then(if (room.bookable) Modifier.clickable { onPick(room) } else Modifier)
                                 .padding(horizontal = 20.dp, vertical = 14.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -218,13 +228,28 @@ internal fun FreeRoomsSheet(state: FreeRoomsState, onClose: () -> Unit) {
                                 )
                                 if (facts.isNotEmpty()) Text(facts.joinToString(" · "), color = Muted, fontSize = 18.sp)
                             }
-                            Text(
-                                room.freeUntil?.let { stringResource(R.string.free_until, fmt.time(it)) }
-                                    ?: stringResource(R.string.free_for_rest_of_day_short),
-                                color = StatusColors.Free,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.SemiBold,
-                            )
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(
+                                    room.freeUntil?.let { stringResource(R.string.free_until, fmt.time(it)) }
+                                        ?: stringResource(R.string.free_for_rest_of_day_short),
+                                    color = StatusColors.Free,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                if (room.bookable) {
+                                    Text(
+                                        stringResource(R.string.tap_to_book),
+                                        color = Color.White,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier
+                                            .padding(top = 6.dp)
+                                            .clip(RoundedCornerShape(50))
+                                            .background(StatusColors.Free)
+                                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                                    )
+                                }
+                            }
                         }
                     }
                 }

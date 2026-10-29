@@ -190,6 +190,15 @@ class PanelViewModel(
         },
     )
 
+    /** Book another room chosen in "Find a free room"; the start is always now. */
+    fun bookFreeRoom(room: FreeRoom, minutes: Int, presetIndex: Int? = null) = run(
+        action = { repository.bookRoom(room.id, minutes, null, presetIndex) },
+        success = {
+            val from = clock.instant()
+            ActionResult.Booked(from, from.plus(Duration.ofMinutes(minutes.toLong())), later = false)
+        },
+    )
+
     fun extend(meetingId: String, minutes: Int) = run(
         action = { repository.extend(meetingId, minutes) },
         success = {

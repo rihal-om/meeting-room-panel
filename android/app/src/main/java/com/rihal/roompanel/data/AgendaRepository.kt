@@ -45,6 +45,9 @@ interface AgendaRepository {
     suspend fun endEarly(meetingId: String): Result<Unit>
     suspend fun checkIn(meetingId: String): Result<Unit>
     suspend fun freeRooms(): Result<List<FreeRoom>>
+
+    /** Book another room (by id) from the free-room finder; the backend enforces that room's rules. */
+    suspend fun bookRoom(roomId: String, minutes: Int, start: Instant? = null, presetIndex: Int? = null): Result<Unit>
     suspend fun reportIssue(category: IssueCategory): Result<Unit>
 
     /** A branding image by its server path, or null if it can't be fetched (the panel just goes without). */
