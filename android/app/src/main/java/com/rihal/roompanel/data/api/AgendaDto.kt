@@ -4,6 +4,7 @@ import com.rihal.roompanel.domain.AttendeeDisplay
 import com.rihal.roompanel.domain.Branding
 import com.rihal.roompanel.domain.Equipment
 import com.rihal.roompanel.domain.FreeRoom
+import com.rihal.roompanel.domain.Person
 import com.rihal.roompanel.domain.GuestWifi
 import com.rihal.roompanel.domain.Meeting
 import com.rihal.roompanel.domain.PanelConfig
@@ -71,7 +72,16 @@ data class FreeRoomDto(
     val floor: String = "",
     val capacity: Int? = null,
     val freeUntil: String? = null,
+    val maxAdHocMinutes: Int = 0,
+    val bookable: Boolean = false,
 )
+
+/** `GET /api/device/people?q=`. */
+@Serializable
+data class PeopleDto(val people: List<PersonDto> = emptyList())
+
+@Serializable
+data class PersonDto(val name: String = "", val email: String)
 
 @Serializable
 data class RoomDto(
@@ -172,11 +182,16 @@ fun PanelDto.toBranding() = Branding(
 )
 
 fun FreeRoomDto.toFreeRoom() = FreeRoom(
+    id = id,
     name = name,
     floor = floor,
     capacity = capacity,
     freeUntil = freeUntil?.let { runCatching { Instant.parse(it) }.getOrNull() },
+    maxAdHocMinutes = maxAdHocMinutes,
+    bookable = bookable,
 )
+
+fun PersonDto.toPerson() = Person(name = name.ifBlank { email }, email = email)
 
 fun MeetingDto.toMeeting(): Meeting = Meeting(
     id = id,

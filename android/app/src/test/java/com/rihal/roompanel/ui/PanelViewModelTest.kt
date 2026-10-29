@@ -4,6 +4,7 @@ import com.rihal.roompanel.data.AgendaRepository
 import com.rihal.roompanel.data.AgendaState
 import com.rihal.roompanel.data.PanelActionException
 import com.rihal.roompanel.domain.FreeRoom
+import com.rihal.roompanel.domain.Person
 import com.rihal.roompanel.domain.IssueCategory
 import com.rihal.roompanel.domain.PanelConfig
 import kotlinx.coroutines.Dispatchers
@@ -56,6 +57,15 @@ class PanelViewModelTest {
         override suspend fun endEarly(meetingId: String) = Result.success(Unit)
         override suspend fun checkIn(meetingId: String) = Result.success(Unit)
         override suspend fun freeRooms() = Result.success(emptyList<FreeRoom>())
+        override suspend fun bookRoom(
+            roomId: String,
+            minutes: Int,
+            start: Instant?,
+            presetIndex: Int?,
+            bookedByEmail: String?,
+            bookedByName: String?,
+        ) = Result.success(Unit)
+        override suspend fun searchPeople(query: String) = Result.success(emptyList<Person>())
         override suspend fun reportIssue(category: IssueCategory) = Result.success(Unit)
         override suspend fun image(path: String): ByteArray? = null
     }

@@ -116,8 +116,21 @@ data class WorkingHours(
     }
 }
 
-/** Another room that is free now, for "Find a free room". */
-data class FreeRoom(val name: String, val floor: String, val capacity: Int?, val freeUntil: Instant?)
+/** Another room that is free now, for "Find a free room". Tappable to book when [bookable]. */
+data class FreeRoom(
+    val id: String,
+    val name: String,
+    val floor: String,
+    val capacity: Int?,
+    val freeUntil: Instant?,
+    /** Longest ad-hoc booking this room allows, to bound the length options. */
+    val maxAdHocMinutes: Int,
+    /** False when the room has tablet booking turned off: it's listed, but can't be booked. */
+    val bookable: Boolean,
+)
+
+/** A person from the Microsoft 365 directory, for the "who booked it" typeahead. */
+data class Person(val name: String, val email: String)
 
 /** "Report a problem" categories; the same fixed list as the portal. */
 enum class IssueCategory { AV, VIDEO_CALL, CLEANING, SUPPLIES, TEMPERATURE, OTHER }
