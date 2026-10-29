@@ -52,10 +52,10 @@ internal fun AgendaPane(
     modifier: Modifier,
 ) {
     val fmt = LocalTimeFormat.current
-    val brand = brandColor(state.config)
     Column(modifier.background(MaterialTheme.colorScheme.surface)) {
+        // Transparent clock header (no brand band): the time and date sit on the agenda surface.
         Row(
-            Modifier.fillMaxWidth().background(brand).padding(horizontal = 24.dp, vertical = 14.dp),
+            Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(fmt.time(state.now), color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.SemiBold)

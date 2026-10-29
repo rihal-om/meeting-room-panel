@@ -4,6 +4,7 @@ import com.rihal.roompanel.domain.AttendeeDisplay
 import com.rihal.roompanel.domain.Branding
 import com.rihal.roompanel.domain.Equipment
 import com.rihal.roompanel.domain.FreeRoom
+import com.rihal.roompanel.domain.Person
 import com.rihal.roompanel.domain.GuestWifi
 import com.rihal.roompanel.domain.IssueCategory
 import com.rihal.roompanel.domain.Meeting
@@ -89,9 +90,25 @@ class DemoAgendaRepository(
 
     override suspend fun freeRooms(): Result<List<FreeRoom>> = Result.success(
         listOf(
-            FreeRoom("Majlis", "Ground floor", 12, clock.instant().plus(Duration.ofMinutes(90))),
-            FreeRoom("Focus Room", "2nd floor", 4, null),
+            FreeRoom("demo-majlis", "Majlis", "Ground floor", 12, clock.instant().plus(Duration.ofMinutes(90)), 120, true),
+            FreeRoom("demo-focus", "Focus Room", "2nd floor", 4, null, 120, true),
         ),
+    )
+
+    override suspend fun bookRoom(
+        roomId: String,
+        minutes: Int,
+        start: Instant?,
+        presetIndex: Int?,
+        bookedByEmail: String?,
+        bookedByName: String?,
+    ): Result<Unit> = Result.success(Unit)
+
+    override suspend fun searchPeople(query: String): Result<List<Person>> = Result.success(
+        listOf(
+            Person("Sara Al Lawati", "sara@rihal.om"),
+            Person("Ahmed Al Habsi", "ahmed@rihal.om"),
+        ).filter { it.name.contains(query, ignoreCase = true) || it.email.contains(query, ignoreCase = true) },
     )
 
     override suspend fun reportIssue(category: IssueCategory): Result<Unit> = Result.success(Unit)

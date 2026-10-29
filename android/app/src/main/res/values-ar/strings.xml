@@ -60,6 +60,8 @@
     <string name="tap_to_book">احجز</string>
     <string name="book_room">احجز %1$s</string>
     <string name="book_from">احجز من %1$s</string>
+    <string name="booked_by">محجوز باسم (اختياري)</string>
+    <string name="booked_by_hint">اكتب اسمًا للبحث</string>
     <string name="pick_title">العنوان في Outlook</string>
     <string name="how_long">كم المدة؟</string>
     <string name="until_time">حتى %1$s</string>

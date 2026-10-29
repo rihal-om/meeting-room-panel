@@ -5,12 +5,15 @@ import com.rihal.roompanel.data.api.AgendaDto
 import com.rihal.roompanel.data.api.ApiException
 import com.rihal.roompanel.data.api.BackendClient
 import com.rihal.roompanel.data.api.FreeRoomsDto
+import com.rihal.roompanel.data.api.PeopleDto
 import com.rihal.roompanel.data.api.isOffline
 import com.rihal.roompanel.data.api.toConfig
 import com.rihal.roompanel.data.api.toFreeRoom
 import com.rihal.roompanel.data.api.toMeeting
+import com.rihal.roompanel.data.api.toPerson
 import com.rihal.roompanel.domain.FreeRoom
 import com.rihal.roompanel.domain.IssueCategory
+import com.rihal.roompanel.domain.Person
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -71,6 +74,33 @@ class RemoteAgendaRepository(
 
     override suspend fun freeRooms(): Result<List<FreeRoom>> = attempt {
         client.get("/api/device/free-rooms", FreeRoomsDto.serializer()).rooms.map { it.toFreeRoom() }
+    }
+
+    override suspend fun bookRoom(
+        roomId: String,
+        minutes: Int,
+        start: Instant?,
+        presetIndex: Int?,
+        bookedByEmail: String?,
+        bookedByName: String?,
+    ): Result<Unit> = attempt {
+        client.post(
+            "/api/device/rooms/$roomId/book",
+            buildJsonObject {
+                put("minutes", minutes)
+                start?.let { put("start", it.toString()) }
+                presetIndex?.let { put("presetIndex", it) }
+                bookedByEmail?.let { put("bookedByEmail", it) }
+                bookedByName?.let { put("bookedByName", it) }
+            }.toString(),
+            JsonElement.serializer(),
+        )
+        Unit
+    }
+
+    override suspend fun searchPeople(query: String): Result<List<Person>> = attempt {
+        val q = java.net.URLEncoder.encode(query, "UTF-8")
+        client.get("/api/device/people?q=$q", PeopleDto.serializer()).people.map { it.toPerson() }
     }
 
     override suspend fun reportIssue(category: IssueCategory): Result<Unit> = attempt {

@@ -13,8 +13,8 @@ android {
         applicationId = "com.rihal.roompanel"
         minSdk = 28 // Android 9: lock task features (setLockTaskFeatures)
         targetSdk = 37
-        versionCode = 4
-        versionName = "0.4.1"
+        versionCode = 9 // must stay above the version on tablets in the field (0.4.5 = 8)
+        versionName = "0.4.6"
         // Backend base URL. Override per build: ./gradlew assembleDebug -PbackendUrl=https://...
         val backendUrl = (project.findProperty("backendUrl") as String?) ?: "https://meeting-room-backend-cyan.vercel.app"
         buildConfigField("String", "BACKEND_URL", "\"$backendUrl\"")
