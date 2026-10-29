@@ -116,7 +116,12 @@ class PanelScreenScreenshotTest {
     fun freeRooms() = render(
         TestStates.state(busyDay),
         "free_rooms",
-        FreeRoomsState.Loaded(listOf(FreeRoom("Majlis", "Ground floor", 12, at(90)), FreeRoom("Focus Room", "2nd floor", 4, null))),
+        FreeRoomsState.Loaded(
+            listOf(
+                FreeRoom("m", "Majlis", "Ground floor", 12, at(90), 120, true),
+                FreeRoom("f", "Focus Room", "2nd floor", 4, null, 120, true),
+            ),
+        ),
     )
 
     @Test

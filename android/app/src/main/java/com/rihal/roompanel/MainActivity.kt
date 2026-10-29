@@ -40,6 +40,8 @@ import com.rihal.roompanel.data.RemoteAgendaRepository
 import com.rihal.roompanel.data.api.BackendClient
 import com.rihal.roompanel.kiosk.AppUpdater
 import com.rihal.roompanel.kiosk.KioskPolicy
+import com.rihal.roompanel.led.LedColor
+import com.rihal.roompanel.led.LedController
 import com.rihal.roompanel.ui.PanelActions
 import com.rihal.roompanel.ui.PanelScreen
 import com.rihal.roompanel.ui.PanelTheme
@@ -52,6 +54,7 @@ class MainActivity : ComponentActivity() {
     private val kiosk by lazy { KioskPolicy(this) }
     private val credentials by lazy { DeviceCredentials(this) }
     private val server by lazy { ServerAddress(this) }
+    private val led by lazy { LedController.create(this) }
 
     /** `-PbackendUrl=demo` builds a self-contained demo (no backend, sample meetings). */
     private val demoMode get() = BuildConfig.BACKEND_URL == "demo"
@@ -77,7 +80,7 @@ class MainActivity : ComponentActivity() {
                 if (paired) {
                     PanelRoute(
                         session = session,
-                        repository = { if (demoMode) DemoAgendaRepository(getString(R.string.demo_room_name)) else RemoteAgendaRepository(client(), mover = mover()) },
+                        repository = { if (demoMode) DemoAgendaRepository(getString(R.string.demo_room_name)) else RemoteAgendaRepository(client(), mover = mover(), rebooter = { kiosk.reboot() }) },
                         onUnpaired = {
                             // Revoked in the portal, or its room deleted: forget the token and pair again.
                             credentials.clear()
@@ -113,6 +116,9 @@ class MainActivity : ComponentActivity() {
         LaunchedEffect(current.brightness) {
             window.attributes = window.attributes.apply { screenBrightness = current.brightness }
         }
+        // Side light bar: green when free, yellow when a meeting starts soon, red when in use.
+        val ledColor = LedColor.of(current.status)
+        LaunchedEffect(ledColor) { led.show(ledColor) }
         val freeRooms by vm.freeRooms.collectAsStateWithLifecycle()
         val actions = remember(vm) {
             PanelActions(
@@ -123,10 +129,13 @@ class MainActivity : ComponentActivity() {
                 onReport = vm::reportIssue,
                 onOpenFreeRooms = vm::openFreeRooms,
                 onCloseFreeRooms = vm::closeFreeRooms,
+                onBookFreeRoom = vm::bookFreeRoom,
+                onSearchPeople = vm::searchPeople,
                 onDismissFeedback = vm::dismissFeedback,
             )
         }
-        PanelScreen(state = current, actions = actions, freeRooms = freeRooms)
+        val people by vm.people.collectAsStateWithLifecycle()
+        PanelScreen(state = current, actions = actions, freeRooms = freeRooms, people = people)
     }
 
     @Composable
