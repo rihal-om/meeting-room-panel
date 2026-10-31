@@ -16,7 +16,17 @@ android {
         versionCode = 4
         versionName = "0.4.1"
         // Backend base URL. Override per build: ./gradlew assembleDebug -PbackendUrl=https://...
-        val backendUrl = (project.findProperty("backendUrl") as String?) ?: "https://meeting-room-backend-cyan.vercel.app"
+        // A RELEASE build must name it explicitly, as an https:// origin: the tablet sends its
+        // device token there, so a release must never pick up the default (or the demo) by
+        // accident (2026-10-29 security review). Debug builds keep the default.
+        val requestedUrl = project.findProperty("backendUrl") as String?
+        val buildsRelease = gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }
+        if (buildsRelease && (requestedUrl == null || !Regex("^https://[^/?#@\\s]+/?$").matches(requestedUrl))) {
+            throw GradleException(
+                "A release build needs -PbackendUrl=https://<portal-host> (got ${requestedUrl ?: "nothing"}).",
+            )
+        }
+        val backendUrl = requestedUrl ?: "https://meeting-room-backend-cyan.vercel.app"
         buildConfigField("String", "BACKEND_URL", "\"$backendUrl\"")
     }
 
