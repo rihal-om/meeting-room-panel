@@ -116,7 +116,9 @@ Paired tablets check the backend about 2 minutes after start and then every 6 ho
    ```bash
    cd android
    read -s -p "Keystore password: " PW; echo
-   ./gradlew assembleRelease -PreleaseKeystore=$HOME/room-panel.jks -PreleaseKeyAlias=room-panel \
+   # -PbackendUrl is required for a release: the portal the tablets will talk to.
+   ./gradlew assembleRelease -PbackendUrl=https://<portal-host> \
+     -PreleaseKeystore=$HOME/room-panel.jks -PreleaseKeyAlias=room-panel \
      -PreleaseStorePassword="$PW" -PreleaseKeyPassword="$PW"; unset PW
    sha256sum app/build/outputs/apk/release/app-release.apk
    ```

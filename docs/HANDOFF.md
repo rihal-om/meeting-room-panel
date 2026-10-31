@@ -33,8 +33,10 @@ To release a new version:
 1. Raise `versionCode` and `versionName` in `android/app/build.gradle.kts`.
 2. Build the signed APK. The keystore and password come from the vault:
    ```sh
-   ./gradlew assembleRelease -PreleaseKeystore=/path/room-panel.jks -PreleaseKeyAlias=room-panel \
+   ./gradlew assembleRelease -PbackendUrl=https://<portal-host> \
+     -PreleaseKeystore=/path/room-panel.jks -PreleaseKeyAlias=room-panel \
      -PreleaseStorePassword="$PW" -PreleaseKeyPassword="$PW"
+   # A release refuses to build without an explicit https:// -PbackendUrl (no silent default).
    sha256sum app/build/outputs/apk/release/app-release.apk
    ```
 3. Publish it from the portal. The steps are in the portal's `docs/HANDOFF.md` under "Releasing a new tablet app version": one tablet first with **Test version**, then everyone.
